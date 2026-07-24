@@ -1,0 +1,135 @@
+import streamlit as st
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
+
+# Set page configuration
+st.set_page_config(page_title="Aquatic Growth Analysis Dashboard", layout="wide")
+
+# Title and introduction
+st.title("Aquatic Growth Analysis Dashboard")
+st.markdown("""
+This dashboard analyzes the impact of environmental and feeding parameters on aquatic growth, based on a synthetic dataset from the research paper *Impact of Environmental and Feeding Parameters on Aquatic Growth: A Data-Driven Approach*. Explore distributions, relationships, and model performance metrics below.
+""")
+
+# Load the dataset
+@st.cache_data
+def load_data():
+    data = pd.read_csv("Synthetic_Dataset_csv.csv")
+    return data
+
+df = load_data()
+
+# Sidebar for navigation
+st.sidebar.header("Navigation")
+options = st.sidebar.radio("Select Visualization", [
+    "Dataset Overview",
+    "Length Increment Distribution",
+    "Length Increment vs Dissolved Oxygen",
+    "Length Increment by Temperature",
+    "Length Increment vs Bait Quantity",
+    "Pairplot of Variables",
+    "Correlation Heatmap",
+    "Model Performance Comparison"
+])
+
+# Dataset Overview
+if options == "Dataset Overview":
+    st.header("Dataset Overview")
+    st.write("The dataset contains the following parameters:")
+    st.write("- Dissolved Oxygen (ppm)")
+    st.write("- pH Value")
+    st.write("- Temperature (°C)")
+    st.write("- Turbidity (NTU)")
+    st.write("- Bait Quantity (grain/week)")
+    st.write("- Length Increment (cm/week)")
+    
+    st.subheader("Sample Data")
+    st.dataframe(df.head())
+    
+    st.subheader("Statistical Summary")
+    st.dataframe(df.describe())
+
+# Length Increment Distribution
+elif options == "Length Increment Distribution":
+    st.header("Distribution of Length Increment")
+    st.markdown("The length increment follows a roughly normal distribution with most values between 0.2–0.5 cm/week.")
+    
+    fig = px.histogram(df, x="Length Increment (cm/week)", nbins=30, title="Histogram of Length Increment")
+    st.plotly_chart(fig, use_container_width=True)
+
+# Length Increment vs Dissolved Oxygen
+elif options == "Length Increment vs Dissolved Oxygen":
+    st.header("Length Increment vs Dissolved Oxygen")
+    st.markdown("A slight positive trend exists where higher dissolved oxygen levels correlate with higher length increments, especially between 2.0–2.5 ppm.")
+    
+    fig = px.scatter(df, x="Dissolved oxygen (ppm)", y="Length Increment (cm/week)", 
+                     trendline="ols", title="Length Increment vs Dissolved Oxygen")
+    st.plotly_chart(fig, use_container_width=True)
+
+# Length Increment by Temperature
+elif options == "Length Increment by Temperature":
+    st.header("Length Increment by Temperature")
+    st.markdown("Length increment remains stable across temperature ranges, with highest variability around 24–25°C.")
+    
+    # Bin temperature for box plot
+    df['Temp_Bin'] = pd.cut(df['Temperature (°C)'], bins=range(17, 30, 2))
+    fig = px.box(df, x="Temp_Bin", y="Length Increment (cm/week)", title="Length Increment by Temperature Range")
+    st.plotly_chart(fig, use_container_width=True)
+
+# Length Increment vs Bait Quantity
+elif options == "Length Increment vs Bait Quantity":
+    st.header("Length Increment vs Bait Quantity")
+    st.markdown("There is almost no linear relationship between bait quantity and length increment.")
+    
+    fig = px.scatter(df, x="Bait Quantity (grain/week)", y="Length Increment (cm/week)", 
+                     trendline="ols", title="Length Increment vs Bait Quantity")
+    st.plotly_chart(fig, use_container_width=True)
+
+# Pairplot of Variables
+elif options == "Pairplot of Variables":
+    st.header("Pairplot of All Variables")
+    st.markdown("The pairplot shows weak linear relationships between variables and length increment, with a slight positive correlation for dissolved oxygen.")
+    
+    # Create pairplot using seaborn
+    pair_fig = sns.pairplot(df, diag_kind="hist", corner=True)
+    st.pyplot(pair_fig.figure)
+
+# Correlation Heatmap
+elif options == "Correlation Heatmap":
+    st.header("Correlation Heatmap")
+    st.markdown("The heatmap confirms weak correlations between variables, indicating no multicollinearity issues.")
+    
+    corr = df.corr()
+    fig = px.imshow(corr, text_auto=True, title="Correlation Heatmap", 
+                    color_continuous_scale="RdBu_r", range_color=[-1, 1])
+    st.plotly_chart(fig, use_container_width=True)
+
+# Model Performance Comparison
+elif options == "Model Performance Comparison":
+    st.header("Model Performance Comparison")
+    st.markdown("The table below compares the performance of various machine learning models used to predict length increment, as reported in the research paper.")
+    
+    # Model performance data from the paper
+    model_data = {
+        "Algorithm": ["Linear Regression", "Decision Tree", "Random Forest", "XGBoost", "SVR", "MLP"],
+        "MAE": [0.102, 0.095, 0.088, 0.085, 0.098, 0.090],
+        "MSE": [0.018, 0.016, 0.014, 0.013, 0.017, 0.015],
+        "R²": [0.05, 0.12, 0.23, 0.28, 0.08, 0.20]
+    }
+    model_df = pd.DataFrame(model_data)
+    
+    st.subheader("Performance Metrics")
+    st.dataframe(model_df.style.format({"MAE": "{:.3f}", "MSE": "{:.3f}", "R²": "{:.2f}"}))
+    
+    st.subheader("MAE Comparison Across Models")
+    fig = px.bar(model_df, x="Algorithm", y="MAE", title="MAE Comparison Across Models", 
+                 color="Algorithm", text="MAE")
+    fig.update_traces(texttemplate="%{text:.3f}", textposition="outside")
+    st.plotly_chart(fig, use_container_width=True)
+
+# Footer
+st.markdown("---")
+st.markdown("Developed based on the research paper by C Anil Kumar and Harshith Raj, NMIMS-Hyderabad.")
