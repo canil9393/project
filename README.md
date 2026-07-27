@@ -46,12 +46,10 @@ A web-based Patient History Management System developed using **PHP, MySQL, HTML
 
 ## 👨‍💻 Author
 
-**Canil Kumar**
-**janshe**
+**Canil Kumar**,
+**janshe**,
 **janhavy**
 
-- GitHub: https://github.com/your-github-username
-- Live Demo: https://anil9392.42web.io
 
 ---
 
